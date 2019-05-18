@@ -16,11 +16,17 @@ PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax
 		PT2257(aAnalogInputPin, aAnalogMin, aAnalogMax, A4, A5) {
 }
 
-PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, int8_t aSDAPin, int8_t aSCLPin) {
+PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, int8_t aSDAPin, int8_t aSCLPin) : 
+		PT2257(aAnalogInputPin, aAnalogMin, aAnalogMax, PT2257_MIN_ATTN, PT2257_MAX_ATTN, A4, A5) {
+}
+
+PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, uint8_t aMinAttn, uint8_t aMaxAttn, int8_t aSDAPin, int8_t aSCLPin) {
 	// this chip needs some time to init, block all !
 	analog_pin = aAnalogInputPin;
-	analog_min_value = aAnalogMin;
-	analog_max_value = aAnalogMax;
+	analog_min = aAnalogMin;
+	analog_max = aAnalogMax;
+	attenuation_min = aMinAttn;
+	attenuation_max = aMaxAttn;
 	pinMode(analog_pin, INPUT);
 	delay(200);
 
@@ -29,9 +35,9 @@ PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax
 	dprint(F("PT2257 initialized: analog pin "));
 	dprint(analog_pin);
 	dprint(F(" / analog min "));
-	dprint(analog_min_value);
+	dprint(analog_min);
 	dprint(F(" / analog max "));
-	dprintln(analog_max_value);
+	dprintln(analog_max);
 }
 
 
@@ -43,7 +49,7 @@ void PT2257::update(int aAnalogValue) {
     softI2C->beginTransmission(PT2257_ADDRESS);
     
     // attenuation goes from -79 to 0 db
-    db_attenuation = map(aAnalogValue, analog_min_value, analog_max_value, PT2257_MIN_ATTN, PT2257_MAX_ATTN);
+    db_attenuation = map(aAnalogValue, analog_min, analog_max, attenuation_min, attenuation_max);
     db_10 = (db_attenuation / 10);
     db_1 = (db_attenuation % 10);
     data = 0;
