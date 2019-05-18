@@ -8,36 +8,31 @@ static const uint16_t ANALOG_DEFAULT_MIN = 0;
 static const uint16_t ANALOG_DEFAULT_MAX = 1023;
 
 
-PT2257::PT2257(uint8_t aAnalogInputPin) : 
-		PT2257(aAnalogInputPin, ANALOG_DEFAULT_MIN, ANALOG_DEFAULT_MAX) {
+PT2257::PT2257(uint8_t aAnalogInputPin) :
+		PT2257(aAnalogInputPin, A4, A5) {
 }
 
-PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax) :
-		PT2257(aAnalogInputPin, aAnalogMin, aAnalogMax, A4, A5) {
+PT2257::PT2257(uint8_t aAnalogInputPin, int8_t aSDAPin, int8_t aSCLPin) : 
+		PT2257(aAnalogInputPin, PT2257_MIN_ATTN, PT2257_MAX_ATTN, A4, A5) {
 }
 
-PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, int8_t aSDAPin, int8_t aSCLPin) : 
-		PT2257(aAnalogInputPin, aAnalogMin, aAnalogMax, PT2257_MIN_ATTN, PT2257_MAX_ATTN, A4, A5) {
-}
+PT2257::PT2257(uint8_t aAnalogInputPin, 
+               uint8_t aMinAttn, uint8_t aMaxAttn, 
+               int8_t aSDAPin, int8_t aSCLPin) :
 
-PT2257::PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, uint8_t aMinAttn, uint8_t aMaxAttn, int8_t aSDAPin, int8_t aSCLPin) {
-	// this chip needs some time to init, block all !
-	analog_pin = aAnalogInputPin;
-	analog_min = aAnalogMin;
-	analog_max = aAnalogMax;
-	attenuation_min = aMinAttn;
-	attenuation_max = aMaxAttn;
+               analog_pin(aAnalogInputPin),
+               analog_min(ANALOG_DEFAULT_MAX),
+               analog_max(ANALOG_DEFAULT_MIN),
+               attenuation_min(aMinAttn),
+               attenuation_max(aMaxAttn) {
+
 	pinMode(analog_pin, INPUT);
+    softI2C = new SoftI2CMaster(aSDAPin, aSCLPin);
+
+    // this chip needs some time to init, block all !
 	delay(200);
 
-	softI2C = new SoftI2CMaster(aSDAPin, aSCLPin);
-
-	dprint(F("PT2257 initialized: analog pin "));
-	dprint(analog_pin);
-	dprint(F(" / analog min "));
-	dprint(analog_min);
-	dprint(F(" / analog max "));
-	dprintln(analog_max);
+	dprintln(F("PT2257 initialized."));
 }
 
 
@@ -45,6 +40,18 @@ void PT2257::update(int aAnalogValue) {
 
 	uint8_t db_10, db_1, data;
 	int db_attenuation;
+
+    // update analog floor / ceiling values
+    if(analog_min > aAnalogValue) {
+        analog_min = aAnalogValue;
+        dprint(F("PT2257: new analog min: "));
+        dprintln(analog_min);
+    }
+    if(analog_max < aAnalogValue) {
+        analog_max = aAnalogValue;
+        dprint(F("PT2257: new analog max: "));
+        dprintln(analog_max);
+    }
 
     softI2C->beginTransmission(PT2257_ADDRESS);
     

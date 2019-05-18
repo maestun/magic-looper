@@ -7,6 +7,10 @@
  * 3 => GND
  *
  */
+
+#ifndef __PT2257_H__
+#define __PT2257_H__
+
 #include <Arduino.h>
 #include "debug.h"
 #include "SoftI2CMaster.h"
@@ -22,9 +26,10 @@ private:
 	void 			update(int aAnalogValue);
 public:
 	PT2257(uint8_t aAnalogInputPin);
-	PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax);
-	PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, int8_t aSDAPin, int8_t aSCLPin);
-	PT2257(uint8_t aAnalogInputPin, uint16_t aAnalogMin, uint16_t aAnalogMax, uint8_t aMinAttn, uint8_t aMaxAttn, int8_t aSDAPin, int8_t aSCLPin);
+	PT2257(uint8_t aAnalogInputPin, int8_t aSDAPin, int8_t aSCLPin);
+	PT2257(uint8_t aAnalogInputPin, uint8_t aMinAttn, uint8_t aMaxAttn, int8_t aSDAPin, int8_t aSCLPin);
 	void disable();
 	void scan();
 };
+
+#endif // __PT2257_H__
