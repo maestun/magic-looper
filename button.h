@@ -7,6 +7,9 @@
  * Release button (after longpress time) => EButtonUnlongpress
  *
  */
+#ifndef __BUTTON_H__
+#define __BUTTON_H__
+
 #include <stdint.h>
 #include <Arduino.h>
 
@@ -41,3 +44,6 @@ public:
     Button(uint8_t aPin, uint16_t aLongpressDelay, ButtonListener * aListener);
     void scan();
 };
+
+#endif // __BUTTON_H__
+
