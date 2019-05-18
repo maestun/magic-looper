@@ -5,7 +5,7 @@ static const uint8_t PT2257_ADDRESS	= 0x88;
 static const uint8_t PT2257_MIN_ATTN = 0;
 static const uint8_t PT2257_MAX_ATTN = 79;
 static const uint16_t ANALOG_DEFAULT_MIN = 0;
-static const uint16_t ANALOG_DEFAULT_MAX = 1024;
+static const uint16_t ANALOG_DEFAULT_MAX = 1023;
 
 
 PT2257::PT2257(uint8_t aAnalogInputPin) : 
@@ -50,14 +50,10 @@ void PT2257::update(int aAnalogValue) {
     
     
     dprint(F("PT2257 analog read: "));
-    dprintln(aAnalogValue);
-    dprint(F("PT2257 update: "));
+    dprint(aAnalogValue);
+    dprint(F(" => attenuation: "));
     dprint(db_attenuation);
-    dprint(F(" / (-"));
-    dprint(db_10);
-    dprint(F("0db, -"));
-    dprint(db_1);
-    dprintln(F("db) "));
+    dprintln(F("db"));
     
     
     if(db_10 > 0) {

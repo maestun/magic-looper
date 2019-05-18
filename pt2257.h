@@ -1,3 +1,12 @@
+/*
+ * Volume control using PT2257 chip
+ * --------------------------------
+ * Uses a linear pot, pin wiring (pot facing) is:
+ * 1 => Vcc
+ * 2 => aAnalogInputPin
+ * 3 => GND
+ *
+ */
 #include <Arduino.h>
 #include "debug.h"
 #include "SoftI2CMaster.h"

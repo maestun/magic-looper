@@ -36,7 +36,7 @@ void setup() {
     gLoopB = new Optoloop(1, LOOP_B_PIN_BYPASS, LOOP_B_PIN_OCTOCOUPLER, 
     					  LOOP_B_PIN_RELAY, LOOP_B_PIN_LED_TEMP, LOOP_B_PIN_LED_TOGGLE, 
     					  LONGPRESS_THRESHOLD_MS, AUDIO_CUT_MS);
-    gVolume = new PT2257(A0);
+    gVolume = new PT2257(A6);
 }
 
 
