@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "optoloop.h"
+#include "pt2257.h"
 #include "debug.h"
 
 #define     LOOP_A_PIN_LED_TEMP    	(2)
@@ -20,6 +21,7 @@
 
 Optoloop *  gLoopA;
 Optoloop *  gLoopB;
+PT2257 *	gVolume;
 
 
 
@@ -34,11 +36,13 @@ void setup() {
     gLoopB = new Optoloop(1, LOOP_B_PIN_BYPASS, LOOP_B_PIN_OCTOCOUPLER, 
     					  LOOP_B_PIN_RELAY, LOOP_B_PIN_LED_TEMP, LOOP_B_PIN_LED_TOGGLE, 
     					  LONGPRESS_THRESHOLD_MS, AUDIO_CUT_MS);
+    gVolume = new PT2257(A6);
 }
 
 
 void loop() {
     gLoopA->scan();
     gLoopB->scan();
+    gVolume->scan();
     delay(1);
 }
