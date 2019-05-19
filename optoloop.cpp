@@ -76,7 +76,7 @@ void Optoloop::onButtonEvent(uint8_t aPin, EButtonScanResult aResult) {
         // button clicked: turn fx off if it was on
         dprint(id);
         dprint(F("->"));
-        dprint(F("CLICK: LOOP TOGGLE"));
+        dprintln(F("CLICK: LOOP TOGGLE"));
         if(fx_on && fx_disable) {
             fx_on = false;
             toggle(false, false);

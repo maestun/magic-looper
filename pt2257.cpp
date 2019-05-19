@@ -2,6 +2,7 @@
 #include "debug.h"
 #include <Wire.h>
 
+
 static const uint8_t PT2257_ADDRESS	= 0x44;
 static const uint8_t PT2257_MIN_ATTN = 0;
 static const uint8_t PT2257_MAX_ATTN = 79;
@@ -57,13 +58,13 @@ void PT2257::update(int aAnalogValue) {
     // update analog floor / ceiling values
     if(analog_min > aAnalogValue) {
         analog_min = aAnalogValue;
-        dprint(F("PT2257: new analog min: "));
-        dprintln(analog_min);
+        // dprint(F("PT2257: new analog min: "));
+        // dprintln(analog_min);
     }
     if(analog_max < aAnalogValue) {
         analog_max = aAnalogValue;
-        dprint(F("PT2257: new analog max: "));
-        dprintln(analog_max);
+        // dprint(F("PT2257: new analog max: "));
+        // dprintln(analog_max);
     }
     
     // attenuation goes from -79 to 0 db
@@ -77,18 +78,18 @@ void PT2257::update(int aAnalogValue) {
     static int prev_attn = -1;
     if(prev_attn != db_attenuation) {    
         prev_attn = db_attenuation;
-        dprint(F("PT2257 analog read: "));
-        dprint(aAnalogValue);
-        dprint(F(" => attenuation: "));
+        // dprint(F("PT2257 analog read: "));
+        // dprintln(aAnalogValue);
+        dprint(F("PT2257 attenuation: "));
         dprint(db_attenuation);
         dprintln(F("db"));
-        dprint(db_tens);
-        dprint(F(" + "));
-        dprintln(db_units);
-        dprint(F("PT2257 send tens: 0b"));
-        dprintbinln(0b11100000 | db_tens);
-        dprint(F("PT2257 send units: 0b"));
-        dprintbinln(0b11010000 | db_units);
+        // dprint(db_tens);
+        // dprint(F(" + "));
+        // dprintln(db_units);
+        // dprint(F("PT2257 send tens: 0b"));
+        // dprintbinln(0b11100000 | db_tens);
+        // dprint(F("PT2257 send units: 0b"));
+        // dprintbinln(0b11010000 | db_units);
     }
 #endif 
 
