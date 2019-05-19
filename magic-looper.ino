@@ -15,14 +15,15 @@
 #define 	LOOP_B_PIN_BYPASS		(6)
 #define     LOOP_B_PIN_RELAY        (11)
 
+#define 	VOLUME_PIN_INPUT		(A6)
+#define 	VOLUME_PIN_MUTE			(12)
+
 #define     LONGPRESS_THRESHOLD_MS  (500)
 #define     AUDIO_CUT_MS            (20)
-
 
 Optoloop *  gLoopA;
 Optoloop *  gLoopB;
 PT2257 *	gVolume;
-
 
 
 // ============================================================================
@@ -36,7 +37,7 @@ void setup() {
     gLoopB = new Optoloop(1, LOOP_B_PIN_BYPASS, LOOP_B_PIN_OCTOCOUPLER, 
     					  LOOP_B_PIN_RELAY, LOOP_B_PIN_LED_TEMP, LOOP_B_PIN_LED_TOGGLE, 
     					  LONGPRESS_THRESHOLD_MS, AUDIO_CUT_MS);
-    gVolume = new PT2257(A6);
+    gVolume = new PT2257(VOLUME_PIN_INPUT, VOLUME_PIN_MUTE);
 }
 
 

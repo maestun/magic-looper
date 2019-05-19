@@ -1,7 +1,8 @@
 #include "pt2257.h"
+#include "debug.h"
+#include <Wire.h>
 
-static const int8_t PIN_NULL = -1;
-static const uint8_t PT2257_ADDRESS	= 0x88;
+static const uint8_t PT2257_ADDRESS	= 0x44;
 static const uint8_t PT2257_MIN_ATTN = 0;
 static const uint8_t PT2257_MAX_ATTN = 79;
 static const uint16_t ANALOG_DEFAULT_MIN = 0;
@@ -9,28 +10,40 @@ static const uint16_t ANALOG_DEFAULT_MAX = 1023;
 
 
 PT2257::PT2257(uint8_t aAnalogInputPin) :
-		PT2257(aAnalogInputPin, A4, A5) {
+		PT2257(aAnalogInputPin, PIN_NULL) {
 }
 
-PT2257::PT2257(uint8_t aAnalogInputPin, int8_t aSDAPin, int8_t aSCLPin) : 
-		PT2257(aAnalogInputPin, PT2257_MIN_ATTN, PT2257_MAX_ATTN, A4, A5) {
+
+PT2257::PT2257(uint8_t aAnalogInputPin, int8_t aMutePin) :
+        PT2257(aAnalogInputPin, aMutePin, PT2257_MIN_ATTN, PT2257_MAX_ATTN) {
 }
 
-PT2257::PT2257(uint8_t aAnalogInputPin, 
-               uint8_t aMinAttn, uint8_t aMaxAttn, 
-               int8_t aSDAPin, int8_t aSCLPin) :
+
+PT2257::PT2257(uint8_t aAnalogInputPin, int8_t aMutePin,
+               uint8_t aMinAttn, uint8_t aMaxAttn) :
 
                analog_pin(aAnalogInputPin),
                analog_min(ANALOG_DEFAULT_MAX),
                analog_max(ANALOG_DEFAULT_MIN),
                attenuation_min(aMinAttn),
                attenuation_max(aMaxAttn) {
+    
+    // this chip needs some time to init, block all !
+    delay(200);
 
 	pinMode(analog_pin, INPUT);
-    softI2C = new SoftI2CMaster(aSDAPin, aSCLPin);
+    Wire.begin();
 
-    // this chip needs some time to init, block all !
-	delay(200);
+    // config mute button if any
+    mute_button = NULL;
+    if(aMutePin != PIN_NULL) {
+        mute_button = new Button(aMutePin, -1, this);
+    }
+
+    // set max volume
+    Wire.beginTransmission(PT2257_ADDRESS);
+    Wire.write(0b11100000);
+    Wire.endTransmission();
 
 	dprintln(F("PT2257 initialized."));
 }
@@ -38,8 +51,8 @@ PT2257::PT2257(uint8_t aAnalogInputPin,
 
 void PT2257::update(int aAnalogValue) {
 
-	uint8_t db_10, db_1, data;
-	int db_attenuation;
+	uint8_t db_tens, db_units;
+    int db_attenuation;
 
     // update analog floor / ceiling values
     if(analog_min > aAnalogValue) {
@@ -52,45 +65,77 @@ void PT2257::update(int aAnalogValue) {
         dprint(F("PT2257: new analog max: "));
         dprintln(analog_max);
     }
-
-    softI2C->beginTransmission(PT2257_ADDRESS);
     
     // attenuation goes from -79 to 0 db
     db_attenuation = map(aAnalogValue, analog_min, analog_max, attenuation_min, attenuation_max);
-    db_10 = (db_attenuation / 10);
-    db_1 = (db_attenuation % 10);
-    data = 0;
     
+    // extract tens and units
+    db_tens = (db_attenuation / 10) & 0b0000111; // force limit to 3 bits
+    db_units = (db_attenuation % 10) & 0b0001111; // force limit to 4 bits
     
-    dprint(F("PT2257 analog read: "));
-    dprint(aAnalogValue);
-    dprint(F(" => attenuation: "));
-    dprint(db_attenuation);
-    dprintln(F("db"));
-    
-    
-    if(db_10 > 0) {
-        data = 0b11100000;   // 0b11100xxx : function "2-Channel, -10dB/step"
-        data |= (db_10 & 0b00000111); // last three bytes => attenuation absolute value in decades (0...7)
-        softI2C->send(data);
+#ifdef _DEBUG
+    static int prev_attn = -1;
+    if(prev_attn != db_attenuation) {    
+        prev_attn = db_attenuation;
+        dprint(F("PT2257 analog read: "));
+        dprint(aAnalogValue);
+        dprint(F(" => attenuation: "));
+        dprint(db_attenuation);
+        dprintln(F("db"));
+        dprint(db_tens);
+        dprint(F(" + "));
+        dprintln(db_units);
+        dprint(F("PT2257 send tens: 0b"));
+        dprintbinln(0b11100000 | db_tens);
+        dprint(F("PT2257 send units: 0b"));
+        dprintbinln(0b11010000 | db_units);
     }
-    if(db_1 > 0) {
-        data = 0b11010000;   // 0b1101xxxx : function "2-Channel, -1dB/step"
-        data |= (db_1 & 0b00001111); // last four bytes => attenuation absolute value in units (0...9)
-        softI2C->send(data);
-    }
-    softI2C->endTransmission();
+#endif 
+
+    Wire.beginTransmission(PT2257_ADDRESS);
+
+    // write tens on both channels
+    Wire.write(0b11100000 | db_tens);
+    
+    // write units on both channels
+    Wire.write(0b11010000 | db_units);
+
+    Wire.endTransmission();
 }
 
 
 void PT2257::disable() {
-    softI2C->beginTransmission(PT2257_ADDRESS);
-    // 1    1    1    1    1    1    1    1    Function OFF (-79dB)
-    softI2C->send(0b11111111);
-    softI2C->endTransmission();
+    dprintln(F("PT2257 disable"));
+
+    Wire.beginTransmission(PT2257_ADDRESS);
+    Wire.write(0b11111111);
+    Wire.endTransmission();
+}
+
+
+void PT2257::mute(bool aMute) {
+    dprint(F("PT2257 mute: "));
+    dprintln(aMute ? F("ON") : F("OFF"));
+
+    Wire.beginTransmission(PT2257_ADDRESS);
+    Wire.write(aMute ? 0b01111001 : 0b01111000);
+    Wire.endTransmission();
 }
 
 
 void PT2257::scan() {
 	update(analogRead(analog_pin));
+    if(mute_button != NULL) {
+        mute_button->scan();
+    }
 }
+
+
+void PT2257::onButtonEvent(uint8_t aPin, EButtonScanResult aResult) {
+    static bool _mute = false;
+    if(aResult == EButtonClick) {
+        _mute = !_mute;
+        mute(_mute);
+    }
+}
+
